@@ -41,7 +41,8 @@ const pkg = {
   dependencies: {
     cors: '^2.8.5',
     express: '^4.19.2',
-    multer: '^1.4.5-lts.1',
+    mammoth: '^1.12.1',
+    unpdf: '^1.8.1',
   },
 }
 writeFileSync(join(OUT, 'package.json'), JSON.stringify(pkg, null, 2) + '\n')
@@ -55,7 +56,7 @@ const readme = `# Dify 知识库演示包
 ## 运行
 
 \`\`\`bash
-npm install --omit=dev   # 安装运行时依赖（express/cors/multer）
+npm install --omit=dev   # 安装运行时依赖（express/cors/mammoth/unpdf）
 npm start                # 启动，监听 http://localhost:3001
 \`\`\`
 

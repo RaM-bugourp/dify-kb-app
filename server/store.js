@@ -4,7 +4,7 @@
 // 未来切换到 MySQL 时，只需将下面每个函数内部实现替换为 SQL，
 // 保持函数签名不变，即可无缝切换（预留 MySQL 接入点）。
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs'
+import { readFileSync, writeFileSync, existsSync, mkdirSync, renameSync, unlinkSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { dirname, join, extname } from 'path'
 
@@ -152,12 +152,24 @@ function load() {
   for (const key of Object.keys(seed)) {
     if (data[key] === undefined) data[key] = JSON.parse(JSON.stringify(seed[key]))
   }
-  writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf-8')
+  writeAtomic(DATA_FILE, data)
   return data
 }
 
+// 原子写：临时文件 + rename 覆盖；Windows 上 rename 覆盖已存在文件可能失败，先删再 rename
+function writeAtomic(filePath, data) {
+  const tmp = `${filePath}.tmp`
+  writeFileSync(tmp, JSON.stringify(data, null, 2) + '\n', 'utf-8')
+  try {
+    renameSync(tmp, filePath)
+  } catch {
+    try { unlinkSync(filePath) } catch { /* 目标不存在则忽略 */ }
+    renameSync(tmp, filePath)
+  }
+}
+
 function persist() {
-  writeFileSync(DATA_FILE, JSON.stringify(db, null, 2), 'utf-8')
+  writeAtomic(DATA_FILE, db)
 }
 
 db = load()
@@ -201,13 +213,15 @@ export function updateDataset(id, patch) {
 }
 
 export function deleteDataset(id) {
+  // 先收集该知识库下所有分区 id，清理对应 Dify 映射，再删除数据（修复孤儿映射残留）
+  const folderIds = new Set(db.folders.filter((f) => f.datasetId === id).map((f) => f.id))
+  db.difyMappings = db.difyMappings.filter((m) => !folderIds.has(m.folderId))
+
   db.datasets = db.datasets.filter((d) => d.id !== id)
   db.folders = db.folders.filter((f) => f.datasetId !== id)
   db.tables = db.tables.filter((t) => t.datasetId !== id)
   db.documents = db.documents.filter((d) => d.datasetId !== id)
   db.images = (db.images ?? []).filter((i) => i.datasetId !== id)
-  const orphanFolderIds = new Set(db.folders.filter((f) => f.datasetId === id).map((f) => f.id))
-  db.difyMappings = db.difyMappings.filter((m) => !orphanFolderIds.has(m.folderId))
   persist()
 }
 

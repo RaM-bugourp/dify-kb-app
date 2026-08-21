@@ -105,10 +105,25 @@ export const syncTable = (id: string) =>
 // ---- Dify 桥接 ----
 export const difyStatus = () => http<{ mode: string; baseUrl: string | null; mappings: unknown[] }>('/dify/status')
 
-export const difyDatasets = () =>
-  http<{ datasets: DifyDataset[]; total: number; mock?: boolean }>('/dify/datasets')
+export const difyDatasets = (apiId?: string) =>
+  http<{ datasets: DifyDataset[]; total: number; mock?: boolean; apiId?: string; apiName?: string }>(
+    `/dify/datasets${apiId ? `?apiId=${encodeURIComponent(apiId)}` : ''}`,
+  )
 
-export const difyRetrieveDataset = (body: { datasetId: string; query: string; topK?: number }) =>
+// 可用 API 列表（含各 API 的知识库；后端已过滤不可用的，只返回可用的）
+export const difyAvailableApis = () => http<AvailableApi[]>(`/dify/apis/available`)
+
+export interface AvailableApi {
+  id: string
+  name: string
+  baseUrl: string
+  apiKeyMasked: string
+  available: boolean
+  reason?: string
+  datasets: DifyDataset[]
+}
+
+export const difyRetrieveDataset = (body: { datasetId: string; query: string; topK?: number; apiId?: string }) =>
   http<{ records: RetrievalRecord[]; query: string; datasetId: string }>('/dify/retrieve-dataset', {
     method: 'POST',
     body: JSON.stringify(body),

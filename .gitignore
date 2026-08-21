@@ -2,7 +2,16 @@ node_modules
 dist
 .env
 .env.local
+
+# TS 增量编译缓存
+*.tsbuildinfo
+
+# tsc 编译出的 vite 配置产物
+vite.config.js
+vite.config.d.ts
 server/files/
 server/.cache/
+server/api-pool.json
+server/logs/
 .DS_Store
 *.local

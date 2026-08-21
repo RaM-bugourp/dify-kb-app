@@ -317,8 +317,12 @@ cd release/dify-kb-demo && npm install --omit=dev && npm start
 
 ## 11. 相关归档文档
 
-- `Dify桥接层与架构图_20260819.md`
-- `release/Dify知识库v03_图片与打包_20260819.md`
+> 历史总结/计划/踩坑文档统一归档在 `docs/history/`，根目录不再散落总结文档。
+
+- `docs/history/Dify桥接层与架构图_20260819.md` — RAG 桥接层设计 + 架构图渲染
+- `docs/history/Dify知识库v03_图片与打包_20260819.md` — 图片展示 + 本地打包演示
+- `docs/history/DONE_全链路打通_20260821.md` — 阶段 1~4 全链路打通结论
+- `docs/history/PLAN_优化与PPT链路接入_20260821.md` — v0.2 优化与对外 API 开放计划
 
 ---
 

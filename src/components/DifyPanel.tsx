@@ -1,14 +1,16 @@
-// 「Dify 知识库」独立视图：拉取 Dify 云知识库列表，选中后语义检索
+// 「Dify 知识库」独立视图：按「可用 API」分 TAB，每个 TAB 下展示该 API 的知识库列表
+// 只显示可用（后端已过滤）的 API；选中知识库后语义检索
 import { useCallback, useEffect, useState } from 'react'
-import { difyDatasets, difyRetrieveDataset } from '../api'
-import type { DifyDataset, RetrievalRecord } from '../api'
+import { difyAvailableApis, difyRetrieveDataset } from '../api'
+import type { AvailableApi, RetrievalRecord } from '../api'
 import { IconSearch, IconBook } from './icons'
 import { Modal } from './ui'
 
 export function DifyPanel({ onBack }: { onBack: () => void }) {
-  const [datasets, setDatasets] = useState<DifyDataset[]>([])
+  const [apis, setApis] = useState<AvailableApi[]>([])
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState('')
+  const [activeApiId, setActiveApiId] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<RetrievalRecord[]>([])
@@ -19,9 +21,9 @@ export function DifyPanel({ onBack }: { onBack: () => void }) {
     setLoading(true)
     setLoadError('')
     try {
-      const r = await difyDatasets()
-      setDatasets(r.datasets ?? [])
-      if (r.mock) setLoadError('当前为 mock 模式，未连接真实 Dify')
+      const list = await difyAvailableApis()
+      setApis(list ?? [])
+      setActiveApiId((prev) => prev ?? list?.[0]?.id ?? null)
     } catch (e) {
       setLoadError((e as Error).message)
     } finally {
@@ -33,13 +35,22 @@ export function DifyPanel({ onBack }: { onBack: () => void }) {
     refresh()
   }, [refresh])
 
+  const activeApi = apis.find((a) => a.id === activeApiId) ?? null
+  const datasets = activeApi?.datasets ?? []
+  const selected = datasets.find((d) => d.id === selectedId) ?? null
+
   async function handleSearch() {
-    if (!selectedId || !query.trim()) return
+    if (!selectedId || !query.trim() || !activeApiId) return
     setSearching(true)
     setError('')
     setResults([])
     try {
-      const r = await difyRetrieveDataset({ datasetId: selectedId, query: query.trim(), topK: 5 })
+      const r = await difyRetrieveDataset({
+        datasetId: selectedId,
+        query: query.trim(),
+        topK: 5,
+        apiId: activeApiId,
+      })
       setResults(r.records ?? [])
     } catch (e) {
       setError((e as Error).message)
@@ -47,8 +58,6 @@ export function DifyPanel({ onBack }: { onBack: () => void }) {
       setSearching(false)
     }
   }
-
-  const selected = datasets.find((d) => d.id === selectedId) ?? null
 
   return (
     <div className="dify-panel">
@@ -59,7 +68,7 @@ export function DifyPanel({ onBack }: { onBack: () => void }) {
       <div className="dify-head">
         <div>
           <h2>Dify 知识库</h2>
-          <div className="breadcrumb">独立接入 Dify 云知识库，按知识库检索（不占用本地分区）</div>
+          <div className="breadcrumb">按可用 Dify API 分 Tab，每个 API 下独立检索知识库</div>
         </div>
         <button className="btn-ghost" onClick={refresh} disabled={loading}>
           {loading ? '拉取中…' : '刷新列表'}
@@ -73,13 +82,38 @@ export function DifyPanel({ onBack }: { onBack: () => void }) {
         </div>
       )}
 
+      {/* API Tab 条 */}
+      <div className="dify-api-tabs">
+        {apis.map((a) => (
+          <button
+            key={a.id}
+            className={`dify-api-tab${activeApiId === a.id ? ' active' : ''}`}
+            onClick={() => {
+              setActiveApiId(a.id)
+              setSelectedId(null)
+              setResults([])
+              setError('')
+            }}
+            title={`${a.name} · ${a.baseUrl}`}
+          >
+            <span className="dot" />
+            {a.name}
+          </button>
+        ))}
+        {!loading && apis.length === 0 && (
+          <span className="dify-api-tab-empty">暂无可用 API</span>
+        )}
+      </div>
+
       <div className="dify-body">
         <div className="dify-list">
-          <div className="dify-list-title">Dify 云知识库（{datasets.length}）</div>
+          <div className="dify-list-title">
+            {activeApi ? `${activeApi.name} · 知识库（${datasets.length}）` : '知识库'}
+          </div>
           {datasets.length === 0 && !loading && (
             <div className="empty" style={{ padding: '30px 10px' }}>
               <div className="emoji">📚</div>
-              <div style={{ fontSize: 13 }}>未拉取到知识库</div>
+              <div style={{ fontSize: 13 }}>该 API 下未拉取到知识库</div>
             </div>
           )}
           {datasets.map((d) => (
@@ -110,7 +144,7 @@ export function DifyPanel({ onBack }: { onBack: () => void }) {
           {!selected ? (
             <div className="empty" style={{ padding: '60px 20px' }}>
               <div className="emoji">👈</div>
-              <div style={{ fontSize: 13 }}>从左侧选择一个 Dify 知识库开始检索</div>
+              <div style={{ fontSize: 13 }}>从左侧选择一个知识库开始检索</div>
             </div>
           ) : (
             <>

@@ -1,5 +1,8 @@
 // 轻量配置加载器（避免额外依赖 dotenv）
 // 从项目根 .env 读取，合并到 process.env（不覆盖已存在的环境变量）
+//
+// 注意：Dify 凭据已迁移到 server/api-pool.json（API 池），本模块不再读取
+// DIFY_* 变量，只保留通用环境变量加载与对外 API key 读取。
 import { readFileSync, existsSync } from 'fs'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
@@ -26,16 +29,6 @@ export function loadEnv() {
 
 // 模块加载时立即读入 .env（确保被 import 时配置已就绪）
 loadEnv()
-
-// ---- 桥接配置 ----
-export function difyConfig() {
-  const baseUrl = process.env.DIFY_BASE_URL || 'https://api.dify.ai/v1'
-  const apiKey = process.env.DIFY_API_KEY || ''
-  const mode = process.env.DIFY_MODE || 'auto'
-  // auto：有 key 就真实，否则 mock；也可显式 real / mock
-  const useReal = mode === 'real' || (mode === 'auto' && !!apiKey)
-  return { baseUrl, apiKey, mode, useReal }
-}
 
 // ---- 对外 API key ----
 export function externalApiKeys() {

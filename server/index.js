@@ -6,6 +6,8 @@ import { fileURLToPath } from 'url'
 import * as store from './store.js'
 import * as dify from './dify-bridge.js'
 import * as parser from './parser.js'
+import * as apiPool from './api-pool.js'
+import { logger } from './logger.js'
 import { loadEnv, externalApiKeys } from './config.js'
 
 loadEnv()
@@ -197,7 +199,7 @@ function makeUploadHandler(handler) {
         if (!parsed) { res.status(400).json({ error: 'multipart 数据不完整' }); return }
         handler(parsed.fields, parsed.file, res)
       } catch (e) {
-        console.error('upload error:', e)
+        logger.error('upload', 'multipart 解析失败:', e)
         if (!res.headersSent) res.status(500).json({ error: e.message })
       }
     })
@@ -281,7 +283,7 @@ app.post('/api/documents', makeUploadHandler(async (fields, file, res) => {
   parser.parseFile(fname, doc.id)
     .then((text) => store.updateDocument(doc.id, { parsedText: text, status: 'pending' }))
     .catch((e) => {
-      console.error('parse failed:', e)
+      logger.error('parser', `解析文档 ${doc.id} 失败:`, e)
       store.updateDocument(doc.id, { status: 'error', error: e.message })
     })
 
@@ -313,7 +315,7 @@ app.delete('/api/documents/:id', wrap(async (req) => {
     }
     // 若已推送到 Dify，删除对应文档
     if (doc.difyDocId && doc.folderId) {
-      try { await dify.deleteDocument(doc.folderId, doc.difyDocId) } catch (e) { console.warn('dify delete doc failed:', e.message) }
+      try { await dify.deleteDocument(doc.folderId, doc.difyDocId) } catch (e) { logger.warn('dify', '删除 Dify 文档失败:', e.message) }
     }
   }
   return { ok: true }
@@ -337,16 +339,34 @@ app.post('/api/documents/:id/sync-dify', wrap(async (req) => {
 // ---- Dify RAG 桥接 ----
 app.get('/api/dify/status', wrap(() => dify.status()))
 app.get('/api/dify/mappings', wrap(() => dify.listMappings()))
-app.get('/api/dify/datasets', wrap(async () => await dify.listDifyDatasets()))
+app.get('/api/dify/datasets', wrap(async (req) => await dify.listDifyDatasets(req.query.apiId ?? null)))
+
+// ---- API 池管理（凭据脱敏，绝不下发明文 key）----
+app.get('/api/dify/api-pool', wrap(() => apiPool.listApis()))
+app.post('/api/dify/api-pool', wrap((req) => {
+  const { name, baseUrl, apiKey } = req.body ?? {}
+  if (!name || !baseUrl || !apiKey) throw new Error('缺少 name/baseUrl/apiKey')
+  const api = apiPool.addApi({ name, baseUrl, apiKey })
+  return apiPool.listApis().find((a) => a.id === api.id) ?? api
+}))
+app.delete('/api/dify/api-pool/:id', wrap((req) => {
+  const removed = apiPool.removeApi(req.params.id)
+  if (!removed) { res.status(404).json({ error: 'API 不存在' }); return }
+  return { ok: true }
+}))
+
+// 可用 API 列表（前端据此只显示可用 API，含各自知识库）
+app.get('/api/dify/apis/available', wrap(async () => await dify.listAvailableApis()))
+
 app.post('/api/dify/retrieve-dataset', wrap(async (req) => {
-  const { datasetId, query, topK } = req.body
+  const { datasetId, query, topK, apiId } = req.body
   if (!datasetId || !query) throw new Error('缺少 datasetId 或 query')
-  return await dify.retrievalByDataset({ datasetId, query, topK })
+  return await dify.retrievalByDataset({ datasetId, query, topK, apiId })
 }))
 app.post('/api/dify/bind', wrap(async (req) => {
-  const { folderId, difyDatasetId, datasetName } = req.body
+  const { folderId, difyDatasetId, datasetName, apiId } = req.body
   if (!folderId || !difyDatasetId) throw new Error('缺少 folderId 或 difyDatasetId')
-  return await dify.bindDataset(folderId, difyDatasetId, datasetName)
+  return await dify.bindDataset(folderId, difyDatasetId, datasetName, apiId)
 }))
 app.post('/api/dify/folders/:folderId/dataset', wrap(async (req) =>
   await dify.ensureDatasetForFolder(req.params.folderId),
@@ -413,7 +433,7 @@ app.post('/api/v1/retrieval', wrap(async (req) => {
         all.push({ ...rec, sourceType: 'document', folderId: fid, folderName: folder?.name ?? '' })
       }
     } catch (e) {
-      console.warn(`retrieval ${fid} failed:`, e.message)
+      logger.warn('dify', `检索分区 ${fid} 失败:`, e.message)
     }
   }
   all.sort((a, b) => b.score - a.score)
@@ -462,6 +482,6 @@ if (existsSync(DIST)) {
 
 const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
-  console.log(`[api] listening on http://localhost:${PORT}`)
-  console.log(`[api] dify mode: ${dify.status().mode}  base: ${dify.status().baseUrl ?? '(mock)'}`)
+  logger.info('server', `listening on http://localhost:${PORT}`)
+  logger.info('server', `dify mode: ${dify.status().mode}`)
 })

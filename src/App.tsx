@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Sidebar } from './components/Sidebar'
 import type { Selection } from './components/Sidebar'
 import { TableView } from './components/TableView'
@@ -106,13 +106,13 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selection])
 
-  const currentName = useMemo2(() => {
+  const currentName = useMemo(() => {
     if (!selection) return ''
     if (selection.type === 'dataset') {
       return tree.datasets.find((d) => d.id === selection.id)?.name ?? ''
     }
     return tree.folders.find((f) => f.id === selection.id)?.name ?? ''
-  })
+  }, [selection, tree.datasets, tree.folders])
 
   // ---- 创建操作 ----
   async function handleCreateDataset(input: { name: string; description: string }) {
@@ -679,11 +679,6 @@ export default function App() {
       {toast && <div className="toast">{toast}</div>}
     </div>
   )
-}
-
-// 简单 useMemo 包装（避免命名冲突）
-function useMemo2<T>(fn: () => T): T {
-  return fn()
 }
 
 function DatasetModal({

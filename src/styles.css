@@ -235,6 +235,53 @@ select {
   background: var(--bg);
 }
 
+/* API Tab 条 */
+.dify-api-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 10px 24px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.dify-api-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+  border-radius: 8px;
+  transition: background 0.12s, color 0.12s;
+}
+
+.dify-api-tab:hover {
+  background: #f2f3f5;
+  color: var(--text);
+}
+
+.dify-api-tab.active {
+  background: rgba(0, 122, 255, 0.1);
+  color: var(--primary);
+}
+
+.dify-api-tab .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--success);
+  flex-shrink: 0;
+}
+
+.dify-api-tab-empty {
+  font-size: 12px;
+  color: var(--text-3);
+  padding: 4px 6px;
+}
+
 .dify-head {
   padding: 16px 24px;
   display: flex;
