@@ -390,7 +390,12 @@ function requireAuth(req, res, next) {
   const keys = externalApiKeys()
   const h = req.headers['authorization'] || ''
   const token = h.startsWith('Bearer ') ? h.slice(7) : ''
-  if (keys.length === 0 || keys.includes(token)) {
+  // fail-closed：未配置任何 key 时一律拒绝，避免误开放
+  if (keys.length === 0) {
+    res.status(503).json({ code: 'unavailable', data: null, error: '服务未配置对外 API key，拒绝访问' })
+    return
+  }
+  if (keys.includes(token)) {
     next()
     return
   }
