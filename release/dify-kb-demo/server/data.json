@@ -1,0 +1,338 @@
+{
+  "datasets": [
+    {
+      "id": "ds_product",
+      "name": "产品知识库",
+      "description": "产品术语、功能清单与使用文档",
+      "createdAt": 1779337292100,
+      "updatedAt": 1786940492100
+    },
+    {
+      "id": "ds_tech",
+      "name": "技术文档库",
+      "description": "接口规范、架构设计与运维手册",
+      "createdAt": 1781929292100,
+      "updatedAt": 1786681292100
+    }
+  ],
+  "folders": [
+    {
+      "id": "f_terms",
+      "datasetId": "ds_product",
+      "parentId": null,
+      "name": "术语与规范"
+    },
+    {
+      "id": "f_docs",
+      "datasetId": "ds_product",
+      "parentId": null,
+      "name": "产品文档"
+    },
+    {
+      "id": "f_api",
+      "datasetId": "ds_tech",
+      "parentId": null,
+      "name": "API 文档"
+    },
+    {
+      "id": "f_arch",
+      "datasetId": "ds_tech",
+      "parentId": null,
+      "name": "架构设计"
+    },
+    {
+      "id": "f_sub",
+      "datasetId": "ds_tech",
+      "parentId": "f_arch",
+      "name": "微服务"
+    }
+  ],
+  "tables": [
+    {
+      "id": "t_terms",
+      "datasetId": "ds_product",
+      "folderId": "f_terms",
+      "name": "术语对照表",
+      "description": "产品术语中英文对照与缩写",
+      "createdAt": 1780201292100,
+      "updatedAt": 1787113473762,
+      "columns": [
+        {
+          "key": "zh",
+          "label": "中文术语",
+          "type": "text"
+        },
+        {
+          "key": "en",
+          "label": "英文术语",
+          "type": "text"
+        },
+        {
+          "key": "abbr",
+          "label": "缩写",
+          "type": "text"
+        },
+        {
+          "key": "note",
+          "label": "说明",
+          "type": "text"
+        }
+      ],
+      "rows": [
+        {
+          "id": "r1",
+          "zh": "知识库",
+          "en": "Knowledge Base",
+          "abbr": "KB",
+          "note": "用于 RAG 检索的文档集合"
+        },
+        {
+          "id": "r2",
+          "zh": "文档",
+          "en": "Document",
+          "abbr": "Doc",
+          "note": "知识库中的单个文件"
+        },
+        {
+          "id": "r3",
+          "zh": "分段",
+          "en": "Chunk",
+          "abbr": "",
+          "note": "文档切分后的最小检索单元"
+        },
+        {
+          "id": "r4",
+          "zh": "召回",
+          "en": "Retrieval",
+          "abbr": "",
+          "note": "根据查询返回相关分段"
+        },
+        {
+          "id": "r5",
+          "zh": "向量化",
+          "en": "Embedding",
+          "abbr": "Emb",
+          "note": "将文本转为向量表示"
+        },
+        {
+          "id": "r_mszl7xlukpi12i",
+          "zh": "",
+          "en": "",
+          "abbr": "",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "id": "t_features",
+      "datasetId": "ds_product",
+      "folderId": "f_terms",
+      "name": "产品功能清单",
+      "description": "各模块功能点与负责人",
+      "createdAt": 1780633292100,
+      "updatedAt": 1786854092100,
+      "columns": [
+        {
+          "key": "module",
+          "label": "功能模块",
+          "type": "text"
+        },
+        {
+          "key": "feature",
+          "label": "功能点",
+          "type": "text"
+        },
+        {
+          "key": "status",
+          "label": "状态",
+          "type": "text"
+        },
+        {
+          "key": "owner",
+          "label": "负责人",
+          "type": "text"
+        }
+      ],
+      "rows": [
+        {
+          "id": "f1",
+          "module": "知识库",
+          "feature": "创建/删除知识库",
+          "status": "已上线",
+          "owner": "Rick"
+        },
+        {
+          "id": "f2",
+          "module": "文档",
+          "feature": "文件导入与解析",
+          "status": "已上线",
+          "owner": "Alice"
+        },
+        {
+          "id": "f3",
+          "module": "检索",
+          "feature": "多路召回",
+          "status": "开发中",
+          "owner": "Bob"
+        },
+        {
+          "id": "f4",
+          "module": "检索",
+          "feature": "Rerank 重排序",
+          "status": "规划中",
+          "owner": "Bob"
+        }
+      ]
+    },
+    {
+      "id": "t_apis",
+      "datasetId": "ds_tech",
+      "folderId": "f_api",
+      "name": "接口清单",
+      "description": "对外开放 API 列表",
+      "createdAt": 1782793292100,
+      "updatedAt": 1786767692100,
+      "columns": [
+        {
+          "key": "method",
+          "label": "方法",
+          "type": "text"
+        },
+        {
+          "key": "path",
+          "label": "路径",
+          "type": "text"
+        },
+        {
+          "key": "desc",
+          "label": "描述",
+          "type": "text"
+        }
+      ],
+      "rows": [
+        {
+          "id": "a1",
+          "method": "GET",
+          "path": "/datasets",
+          "desc": "获取知识库列表"
+        },
+        {
+          "id": "a2",
+          "method": "POST",
+          "path": "/datasets",
+          "desc": "创建知识库"
+        },
+        {
+          "id": "a3",
+          "method": "GET",
+          "path": "/datasets/{id}/documents",
+          "desc": "获取文档列表"
+        }
+      ]
+    }
+  ],
+  "documents": [
+    {
+      "id": "d1",
+      "datasetId": "ds_product",
+      "folderId": "f_docs",
+      "name": "快速入门指南.pdf",
+      "type": "pdf",
+      "size": 1024000,
+      "updatedAt": 1786249292100,
+      "status": "completed"
+    },
+    {
+      "id": "d2",
+      "datasetId": "ds_product",
+      "folderId": "f_docs",
+      "name": "常见问题 FAQ.md",
+      "type": "md",
+      "size": 24000,
+      "updatedAt": 1786422092100,
+      "status": "completed"
+    },
+    {
+      "id": "d3",
+      "datasetId": "ds_tech",
+      "folderId": "f_arch",
+      "name": "系统架构设计.md",
+      "type": "md",
+      "size": 68000,
+      "updatedAt": 1786076492100,
+      "status": "completed"
+    },
+    {
+      "id": "d4",
+      "datasetId": "ds_tech",
+      "folderId": "f_sub",
+      "name": "微服务治理指南.md",
+      "type": "md",
+      "size": 52000,
+      "updatedAt": 1786594892100,
+      "status": "indexing"
+    }
+  ],
+  "images": [
+    {
+      "id": "img_arch",
+      "datasetId": "ds_tech",
+      "folderId": "f_arch",
+      "name": "系统架构图",
+      "file": "arch-blue.png",
+      "mime": "image/png",
+      "size": 57768,
+      "width": 900,
+      "height": 520,
+      "updatedAt": 1786077584255
+    },
+    {
+      "id": "img_flow",
+      "datasetId": "ds_tech",
+      "folderId": "f_sub",
+      "name": "微服务调用流程图",
+      "file": "flow-green.png",
+      "mime": "image/png",
+      "size": 41343,
+      "width": 900,
+      "height": 520,
+      "updatedAt": 1786595984255
+    },
+    {
+      "id": "img_terms",
+      "datasetId": "ds_product",
+      "folderId": "f_terms",
+      "name": "术语关系图",
+      "file": "terms-orange.png",
+      "mime": "image/png",
+      "size": 56076,
+      "width": 900,
+      "height": 520,
+      "updatedAt": 1786336784255
+    },
+    {
+      "id": "img_ui",
+      "datasetId": "ds_product",
+      "folderId": "f_docs",
+      "name": "界面设计稿",
+      "file": "ui-purple.png",
+      "mime": "image/png",
+      "size": 58494,
+      "width": 900,
+      "height": 520,
+      "updatedAt": 1786768784255
+    },
+    {
+      "id": "img_photo",
+      "datasetId": "ds_tech",
+      "folderId": "f_api",
+      "name": "接口示例截图",
+      "file": "photo-coral.png",
+      "mime": "image/png",
+      "size": 39354,
+      "width": 900,
+      "height": 520,
+      "updatedAt": 1786941584255
+    }
+  ]
+}
